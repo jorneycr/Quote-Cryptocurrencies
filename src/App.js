@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from '@emotion/styled';
 import imagen from './cryptomonedas.png';
 import Formulario from './components/Formulario';
 import Cotizacion from './components/Cotizacion';
 import axios from 'axios';
+import Spinner from './components/Spinner.js';
 
 const Contenedor = styled.div`
   max-width: 900px;
@@ -41,24 +42,39 @@ function App() {
   const [moneda, guardarMoneda] = useState('');
   const [criptomoneda, guardarCriptomoneda] = useState('');
   const [resultado, guardarResultado] = useState({});
+  const [cargando, guardarCargando] = useState(false);
 
-  useEffect(()=>{
+  useEffect(() => {
 
     const cotizarCriptomoneda = async () => {
       //evitamos la ejecucion la primera vez
-    if(moneda ==='') return;
+      if (moneda === '') return;
 
-    //consultar la api para obtener la cotizacion
-    const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptomoneda}&tsyms=${moneda}`;
+      //consultar la api para obtener la cotizacion
+      const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptomoneda}&tsyms=${moneda}`;
 
-    const resultado = await axios.get(url);
+      const resultado = await axios.get(url);
 
-    guardarResultado(resultado.data.DISPLAY[criptomoneda][moneda]);
+      //mostrar spinner
+      guardarCargando(true);
+
+      setTimeout(() => {
+
+        //deshabilita spinner
+        guardarCargando(false);
+
+        //guardar resultado
+        guardarResultado(resultado.data.DISPLAY[criptomoneda][moneda]);
+
+      }, 1000)
     }
 
     cotizarCriptomoneda();
 
-  }, [moneda, criptomoneda])
+  }, [moneda, criptomoneda]);
+
+  //mostrar spinner o resultado
+  const componente = (cargando) ? <Spinner/>: <Cotizacion resultado={resultado}/>
 
   return (
     <>
@@ -75,9 +91,7 @@ function App() {
             guardarMoneda={guardarMoneda}
             guardarCriptomoneda={guardarCriptomoneda}
           />
-          <Cotizacion
-            resultado={resultado}
-          />
+          {componente}
         </div>
       </Contenedor>
     </>
